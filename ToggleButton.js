@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import { FlipToggle , View , StyleSheet } from 'react-native';
+import {  View , StyleSheet } from 'react-native';
 import SwitchSelector from 'react-native-switch-selector'
-import ListItems from './ListItems';
+//import ListItems from './ListItems';
 
 export default class ToggleButton extends Component{
 
@@ -14,12 +14,14 @@ export default class ToggleButton extends Component{
     render(){
         return(
             <View style ={styles.buttonView}>
+                <View style = {{height:5,width:100, justifyContent:'center', alignItems:'center'}}>
                 <SwitchSelector 
                 options={options}
                 buttonColor='red'
                backgroundColor='#E6E6E6'
                onPress = {(value) => {this.props.changeType(value) }}
                 />
+                </View>
             </View>
         )
        }

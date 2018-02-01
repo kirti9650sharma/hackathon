@@ -3,7 +3,9 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import MultiSlider from '@ptomasroos/react-native-multi-slider';
 import { StackNavigator  } from 'react-navigation';
 var bedroom;
-
+//var multiSliderValue = [0,100000000]
+// var  valuesToDisplay=[0,100000000]
+// var  valuesToDisplayRent=[0,150000]
 export default class FilterScreen extends Component{
  
     static navigationOptions = ({ navigation }) => {
@@ -13,31 +15,83 @@ export default class FilterScreen extends Component{
     }
 constructor(props) {
         super(props)
+        const { params } = this.props.navigation.state;
         this.state = { 
-            multiSliderValue: [4000000, 15000000]
+          //  multiSliderValue: [0,100000000],
+            pressStatus: [false,false,false,false],
+            valuesToDisplay:[params.minValue,params.maxValue],
+            valuesToDisplayRent:[params.minValue,params.maxValue]
+
         }
        }
 
     multiSliderValuesChange = (values) => {
+        // this.setState({
+        //   valuesToDisplay: values,
+        // });
+  //      console.log(values)
+        const { params } = this.props.navigation.state;
+       params.minValue=values[0]
+       params.maxValue=values[1] 
+       if(params.type===0)
+       {
+    //    valuesToDisplay[0]=values[0]
+    //    valuesToDisplay[1]=values[1]
         this.setState({
-          multiSliderValue: values,
-        });
-        
+       valuesToDisplay:values
+       
+        })
+    }
+    else{
+    //     valuesToDisplayRent[0]=values[0]
+    //    valuesToDisplayRent[1]=values[1]
+        this.setState({
+       valuesToDisplayRent:values
+       })
+    }
       }
-
+    
+onPress=(n) => {
+    var {params}=this.props.navigation.state;
+   // params.bedroom.push(n)
+   var pressStatusUpdate = params.pressStatus
+  if(params.bedroom[n-2]===0)
+  {
+    params.bedroom[n-2]=1
+    pressStatusUpdate[n-2]=true
+  }
+  else{
+    params.bedroom[n-2]=0
+    pressStatusUpdate[n-2]=false  
+  }
+   
+    // if(pressStatusUpdate[n-2]===false)
+    // {pressStatusUpdate[n-2]=true}
+    // else{
+    //     pressStatusUpdate[n-2]=false   
+    // }
+    console.log(params.bedroom, pressStatusUpdate)
+    this.setState({
+        pressStatus : pressStatusUpdate
+    })  
+    params.pressStatus=pressStatusUpdate
+}
 gotoHome(){
     const { goBack } = this.props.navigation;
     const { params } = this.props.navigation.state;
-    params.lValue=this.state.multiSliderValue[0]
-    params.rValue=this.state.multiSliderValue[1]
+    // params.lValue=this.state.multiSliderValue[0]
+    // params.rValue=this.state.multiSliderValue[1]
     goBack();
-    console.log(params.bedroom)
-    params.acceptFilters(params.bedroom,params.lValue,params.rValue);
+    //console.log(params.bedroom)
+    params.acceptFilters(params.bedroom,params.minValue,params.maxValue,params.pressStatus);
     }
+
 
     render()
     {
         var {params}=this.props.navigation.state;
+        console.log(params.type ,params.minValue, params.maxValue,params.pressStatus,params.bedroom)
+     //   console.log(this.state.pressStatus)
         const {goBack} = this.props.navigation;
         return(
         <View style = {{backgroundColor:'#FAFAFA',justifyContent:'space-between',flex:1,flexDirection:'column'}}>
@@ -47,27 +101,27 @@ gotoHome(){
                 </View>
                 <View style = {styles.buttonView}>
                    <TouchableOpacity 
-                                      style = {styles.textView}
-                                      onPress={() => (params.bedroom=2)}>
-                        <Text style = {{fontSize:15}}>2BHK </Text>
+                                      style = { params.pressStatus[0] ? styles.button : styles.textView }
+                                      onPress={() => {this.onPress(2) }}>
+                        <Text style = {{fontSize:15}}>2 BHK </Text>
                     </TouchableOpacity>
                    
                     <TouchableOpacity 
-                                      style = {styles.textView}
-                                      onPress={() => (params.bedroom=3)}>
-                        <Text style = {{fontSize:15}}>3BHK</Text>
+                                      style = {  params.pressStatus[1] ? styles.button : styles.textView }
+                                      onPress={() => {this.onPress(3) }}>
+                        <Text style = {{fontSize:15}}>3 BHK</Text>
                     </TouchableOpacity>
                    
                     <TouchableOpacity 
-                                      style = {styles.textView}
-                                      onPress={() => (params.bedroom=4)}>
-                        <Text style = {{fontSize:15}}>4BHK</Text>
+                                      style = { params.pressStatus[2] ? styles.button : styles.textView }
+                                      onPress={() => {this.onPress(4) }}>
+                        <Text style = {{fontSize:15}}>4 BHK</Text>
                     </TouchableOpacity>
                     
                     <TouchableOpacity  
-                                       style = {styles.textView}
-                                       onPress={() => (params.bedroom=5)}>
-                        <Text style = {{fontSize:15}}>5BHK</Text>
+                                       style = { params.pressStatus[3] ? styles.button : styles.textView }
+                                       onPress={() => {this.onPress(5) }}>
+                        <Text style = {{fontSize:15}}>5 BHK</Text>
                     </TouchableOpacity>
                 </View>
                 <View>
@@ -75,7 +129,7 @@ gotoHome(){
                 </View>
                 <View style = {{marginTop:30}}>
                             <MultiSlider
-                                values={[this.state.multiSliderValue[0], this.state.multiSliderValue[1]]}
+                                values={[params.minValue, params.maxValue]}
                                 sliderLength={280}
                                 onValuesChange={this.multiSliderValuesChange}
                                 allowOverlap
@@ -88,8 +142,8 @@ gotoHome(){
                                 containerStyle={{
                                 height:2,
                                 }}
-                                min={10000}
-                                max={20000000}
+                                min={0}
+                                max={(params.type===0) ? 100000000 : 150000}
                                 step={100}
                               trackStyle={{
                                 height:2,
@@ -101,9 +155,50 @@ gotoHome(){
                                 borderRadius: 10
                             }}
                              />
+                             
+                            { (params.type===0) && 
+                                <View style = {{flexDirection:'row',marginTop:15,justifyContent:'space-between'}}>
+                                    { ((this.state.valuesToDisplay[0])/100000<1) &&
+                                        <Text>₹{(this.state.valuesToDisplay[0])} </Text>  
+                                    }
+                                    {   ((this.state.valuesToDisplay[0])/100000>1) && ((this.state.valuesToDisplay[0])/10000000<1) &&
+                                        <Text>{(this.state.valuesToDisplay[0])/100000}L </Text>  
+                                    }
+                                    {   ((this.state.valuesToDisplay[0])/10000000>1) &&
+                                        <Text>{(this.state.valuesToDisplay[0])/10000000}Cr </Text>  
+                                    }
 
-                            <Text style = {{marginTop:15}}>{(this.state.multiSliderValue[0])/100000}L       {(this.state.multiSliderValue[1])/100000}L</Text>
-                         
+                                    { ((this.state.valuesToDisplay[1])/100000<1) &&
+                                        <Text>₹{(this.state.valuesToDisplay[1])} </Text>  
+                                    }
+                                    {/* {   ((this.state.valuesToDisplay[1])/100000>1) && ((this.state.valuesToDisplay[0])/10000000<1) &&
+                                        <Text>{(this.state.valuesToDisplay[1])/100000}L </Text>  
+                                    } */}
+                                    {   ((this.state.valuesToDisplay[1])/10000000>1) &&
+                                        <Text>{(this.state.valuesToDisplay[1])/10000000}Cr </Text>  
+                                    }
+                                </View>      
+                            }
+                            { (params.type===1) && 
+                                <View style = {{flexDirection:'row',marginTop:15,justifyContent:'space-between'}}>
+
+                                    { ((this.state.valuesToDisplayRent[0])/100000<1) &&
+                                        <Text>₹{(this.state.valuesToDisplayRent[0])} </Text>  
+                                    }
+                                    {   ((this.state.valuesToDisplayRent[0])/100000>1) &&
+                                        <Text>{(this.state.valuesToDisplayRent[0])/100000}L </Text>  
+                                    }
+                                    {/* <Text>₹{this.state.valuesToDisplayRent[0]}</Text> */}
+
+                                    { ((this.state.valuesToDisplayRent[1])/100000<1) &&
+                                         <Text>₹{(this.state.valuesToDisplayRent[1])} </Text>  
+                                    }
+                                    {   ((this.state.valuesToDisplayRent[1])/100000>1) &&
+                                        <Text>{(this.state.valuesToDisplayRent[1])/100000}L </Text>  
+                                    }
+                                </View>     
+                            }
+                            
                 </View>
             </View>
             <View>
@@ -149,5 +244,15 @@ const styles = StyleSheet.create({
         height:30,
         justifyContent:'center',
         alignItems:'center'
+    },
+    button:{
+        borderWidth:0.8,
+        borderColor: '#D8D8D8',
+        borderRadius:5,
+        width:70,
+        height:30,
+        justifyContent:'center',
+        alignItems:'center',
+        backgroundColor:'#FE2E2E'
     }
 })

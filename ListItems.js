@@ -4,7 +4,6 @@ import { View, Image , StyleSheet, ActivityIndicator, FlatList, Text } from 'rea
 var category;
 var listingCategory;
 var bedrooms;
-var flag=0;
 var pageNum=0;
 export default class ListItems extends Component {
 
@@ -15,32 +14,55 @@ export default class ListItems extends Component {
         isLoading: true,
     }
   }
+
   componentWillReceiveProps(nextProps){
     this.setState({
        item: [],
        isLoading: true,
-    })
+        })
     pageNum = 0
+    let flag=0
     category = nextProps.category 
     listingCategory = (category === 0) ?'"Primary","Resale"' : '"Rental"'
-    bedrooms = (nextProps.bedroom===0) ? '"2","3","4","5"' : nextProps.bedroom.toString()
-    range = (nextProps.lValue===0&&nextProps.rValue===0) ? '' : ',{"range":{"price":{"from":"'+nextProps.lValue+'","to":"'+nextProps.rValue+'"}}}'
-     this.fetchData(listingCategory,bedrooms,range)
+    console.log(nextProps.bedroom)
+    temp1 = '{"equal":{"bedrooms":['
+    temp2 = ']}},'
+    tempBedrooms = ''
+    for(let i=0;i<4;i++)
+    {
+        
+        tempBedrooms = (nextProps.bedroom[i]===0) ? tempBedrooms+'' :tempBedrooms+'"'+((i+2).toString())+'"'+','
+    
+
+        if(nextProps.bedroom[i]===1)
+        {
+            flag=1;
+        }
+    }
+    tempBedrooms = tempBedrooms.substring(0, tempBedrooms.length - 1)
+    console.log(tempBedrooms)
+    bedrooms = (flag===1) ? temp1+tempBedrooms+temp2 : ''
+    range = (nextProps.lValue===0&&nextProps.rValue===0) ? ' ' : ',{"range":{"price":{"from":"'+nextProps.lValue+'","to":"'+nextProps.rValue+'"}}}'
+    this.fetchData(listingCategory,bedrooms,range)
   }
   
-  _keyExtractor = (item, index) => item.listing.id;
+  _keyExtractor = (item, index) => {  
+        return item.listing.id
+        }
+
+  //*********************   Function to fetch data from API   ************/
   fetchData = (listingCategory,bedrooms,range) => { 
     console.log(listingCategory,bedrooms,range)
-    url='https://www.makaan.com/petra/app/v4/listing?selector={"fields":["mainImageURL"],"filters":{"and":[{"equal":{"cityId":11}},{"equal":{"listingCategory":['
+    url='https://www.makaan.com/petra/app/v4/listing?selector={"fields":["mainImageURL"],"filters":{"and":['+bedrooms+'{"equal":{"listingCategory":['
       +listingCategory+
-      ']}},{"equal":{"bedrooms":['
-      +bedrooms+
-      ']}}'
+      ']}},{"equal":{"cityId":11}}'
       +range+
       ']},"paging":{"start":'
       +pageNum+
       ',"rows":20}}&includeNearbyResults=false&includeSponsoredResults=false&sourceDomain=Makaan'
-      
+
+    console.log(url)
+
     fetch(url, {
        method: 'GET'
     })
@@ -66,17 +88,39 @@ export default class ListItems extends Component {
     })
     
   }
-fetchMore = () => {
-    this.fetchData(listingCategory,bedrooms,range)
-  }
+
+//*************    Function to fetch next page data from API  **********/
+    fetchMore = () => {
+        this.fetchData(listingCategory,bedrooms,range)
+    }
 
 componentDidMount = () => {
+    let flag=0
     category = this.props.category 
+    console.log(this.props.bedroom)
     listingCategory = (category === 0) ?'"Primary","Resale"' : '"Rental"'
-    bedrooms = (this.props.bedroom===0) ? '"2","3","4","5"' : this.props.bedroom.toString()
-    range = (this.props.lValue===0&&this.props.rValue===0) ? '' : ',{"range":{"price":{"from":"'+this.props.lValue+'","to":"'+this.props.rValue+'"}}}'
+    temp1 = '{"equal":{"bedrooms":['
+    temp2 = ']}},'
+    tempBedrooms = ''
+    for(let i=0;i<4;i++)
+    {
+        
+        tempBedrooms = (this.props.bedroom[i]===0) ? tempBedrooms+'' :tempBedrooms+'"'+((i+2).toString())+'"'+','
+       
+        if(this.props.bedroom[i]===1)
+        {
+            flag=1;
+        }
+    }
+    tempBedrooms = tempBedrooms.substring(0, tempBedrooms.length - 1)
+    console.log(tempBedrooms)
+    bedrooms = (flag===1) ? temp1+tempBedrooms+temp2 : ''
+  //  bedrooms = (this.props.bedroom.length===0) ? ' ' :'{"equal":{"bedrooms":['+this.props.bedroom.toString()+']}},'
+    range = (this.props.lValue===0&&this.props.rValue===0) ? ' ' : ',{"range":{"price":{"from":"'+this.props.lValue+'","to":"'+this.props.rValue+'"}}}'
     this.fetchData(listingCategory,bedrooms,range)
     }
+
+//*****************  Function to convert possession date to month-year format  *********    
 convertToMonthYear(dateM)
 {
   let date= new Date(dateM);
@@ -101,7 +145,7 @@ convertToMonthYear(dateM)
 }       
 
 render() {
-    console.log(this.state)
+   // console.log(this.state)
    if (this.state.isLoading) {
         return (
         <View style={{justifyContent:'center',alignItems:'center'}}>
@@ -109,41 +153,43 @@ render() {
         </View>
         );
     }
-    console.log(new Date(this.state.item[0].listing.property.project.possessionDate).getFullYear() )
+  //  console.log(new Date(this.state.item[0].listing.property.project.possessionDate).getFullYear() )
         return (
             
             <View style = {styles.style}>
            
                 <FlatList
-                data={this.state.item}
-                renderItem={({item}) =>
-                <View style = {styles.card}>
-                    <Image style = {{width:350,height:180}}
-                    source = {{ uri: item.listing.mainImageURL }}
-                    />
-                    <View style = {{marginBottom:20,marginTop:8}}>
-                        { ((item.listing.currentListingPrice.price)/100000 > 1) && 
-                            <Text style = {{fontWeight:'600',fontSize:15}}>₹ {Math.trunc((item.listing.currentListingPrice.price)/1000)/100}L </Text>
-                        }
-                        { ((item.listing.currentListingPrice.price)/100000 < 1) && 
-                            <Text style = {{fontWeight:'600',fontSize:15}}>₹ {(item.listing.currentListingPrice.price)} </Text>
-                        }
-                        <Text style = {{fontWeight:'600',fontSize:13, marginTop:7}}>{item.listing.property.bedrooms} BHK Apartment   {item.listing.property.size} {item.listing.property.measure}</Text>
-                        <Text style = {styles.textStyle}>{item.listing.property.unitType === 'Apartment' ? item.listing.property.project.name : item.listing.property.unitType }  |  {item.listing.property.project.locality.label} {item.listing.property.project.locality.suburb.label} </Text>
-                        <Text style = {styles.textStyle}>Possession by {item.listing.property.project.possessionDate ? this.convertToMonthYear(item.listing.property.project.possessionDate) : this.convertToMonthYear(item.listing.possessionDate) } | {item.listing.floor}th of {item.listing.totalFloors} floor
-                        </Text>
+                    data={this.state.item}
+                    renderItem={({item}) =>
+                    <View style = {styles.card}>
+                        <Image style = {{width:350,height:180}}
+                        source = {{ uri: item.listing.mainImageURL }}
+                        />
+                        <View style = {{marginBottom:20,marginTop:8}}>
+                            { ((item.listing.currentListingPrice.price)/100000 > 1) && 
+                                <Text style = {{fontWeight:'600',fontSize:15}}>₹ {Math.trunc((item.listing.currentListingPrice.price)/1000)/100}L </Text>
+                            }
+                            { ((item.listing.currentListingPrice.price)/100000 < 1) && 
+                                <Text style = {{fontWeight:'600',fontSize:15}}>₹ {(item.listing.currentListingPrice.price)} </Text>
+                            }
+                            <Text style = {{fontWeight:'600',fontSize:13, marginTop:7}}>{item.listing.property.bedrooms} BHK Apartment   {item.listing.property.size} {item.listing.property.measure}</Text>
+                            <Text style = {styles.textStyle}>{item.listing.property.unitType === 'Apartment' ? item.listing.property.project.name : item.listing.property.unitType }  |  {item.listing.property.project.locality.label} {item.listing.property.project.locality.suburb.label} </Text>
+                            <Text style = {styles.textStyle}>Possession by {item.listing.property.project.possessionDate ? this.convertToMonthYear(item.listing.property.project.possessionDate) : this.convertToMonthYear(item.listing.possessionDate) } | {item.listing.floor}th of {item.listing.totalFloors} floor
+                            </Text>
+                        </View>
                     </View>
-                </View>
-                }
-                onEndReachedThreshold={0.5}
-                onEndReached={() => {
-                this.fetchMore()
-                }}
-                keyExtractor={this._keyExtractor}
+                    }
+                    onEndReachedThreshold={0.5}
+                    onEndReached={() => {
+                        this.fetchMore()
+                        }}
+                    keyExtractor={this._keyExtractor}
                 />
             </View>
         )
     }
+   
+
 }   
 
 const styles = StyleSheet.create({

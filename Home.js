@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View , StyleSheet , TouchableOpacity, Text ,Image} from 'react-native';
+import { View , StyleSheet , TouchableOpacity, Text ,Image, StatusBar} from 'react-native';
 import { StackNavigator  } from 'react-navigation';
 import ListItems from './ListItems';
 import FilterScreen from './FilterScreen';
@@ -26,31 +26,58 @@ class Home extends Component {
     constructor(props) {
         super(props);
         this.state = { type:0,           // 0 represents buy and 1 represents rent
-                     bedrooms:0,        
+                     bedrooms:[0,0,0,0],        
                      lValue:0,
-                     rValue:0 
+                     rValue:100000000,
+                     rValueForRent:150000,
+                     filterApplied:false ,
+                     pressStatus: [false,false,false,false]
                     } 
              
     }
    //************* Function for changing type(Buy/Rent) of properties ****************//
-    changeType = (changedValue) => this.setState({ type: changedValue})
+    changeType = (changedValue) => this.setState(
+    { 
+        type: changedValue,
+        bedrooms:[0,0,0,0],        
+        lValue:0,
+        rValue:100000000,
+        rValueForRent:150000,
+        filterApplied:false ,
+        pressStatus: [false,false,false,false]
+    })
 
     /***************Function to go to filter screen  ********************/
     gotoFilter = () => {
-		const { navigate } = this.props.navigation;
-        navigate('Filter',{acceptFilters: this.acceptFilters,bedroom:0,minValue:10000,maxValue:20000000})
-    }  
+        const { navigate } = this.props.navigation;
+        if(this.state.type===0){
+        navigate('Filter',{acceptFilters: this.acceptFilters,type:this.state.type,bedroom:this.state.bedrooms,minValue:this.state.lValue,maxValue:this.state.rValue,pressStatus:this.state.pressStatus})
+    } 
+        else{
+            navigate('Filter',{acceptFilters: this.acceptFilters,type:this.state.type,bedroom:this.state.bedrooms,minValue:this.state.lValue,maxValue:this.state.rValueForRent,pressStatus:this.state.pressStatus}) 
+        } 
+}
     
     /**************Accepting Filters from Filter screen *******************/
-    acceptFilters = (setBedroom,minValue,maxValue) => {
+    acceptFilters = (setBedroom,minValue,maxValue,buttonStatus) => {
         this.setState({bedrooms:setBedroom,
                         lValue:minValue,
-                        rValue:maxValue })
+                        rValue:maxValue, 
+                        rValueForRent:maxValue,
+                        filterApplied:true,
+                        pressStatus:buttonStatus
+                        })
   
     }
-  
+  checkFilter = () => {
+      if(this.state.filterApplied===true)
+       { return 'Applied'}
+       else
+       {return 'NotApplied'}
+  }
     render(){
-        console.log(this.state) 
+
+       // console.log(this.state) 
         const { navigate } = this.props.navigation;
         return (
             <View style = {{backgroundColor:'white'}}>
@@ -62,7 +89,7 @@ class Home extends Component {
                                 onPress={() => { this.gotoFilter()}}>
                             <View>
                                 <Text style = {styles.filterTextStyle}> FILTER </Text>
-                                <Text style = {{color:'grey'}}> Not Applied </Text>
+                                <Text style = {{color:'grey'}}> {this.checkFilter()} </Text>
                             </View>
                         </TouchableOpacity>
                 </View>
@@ -71,7 +98,7 @@ class Home extends Component {
                         category = {this.state.type}
                         bedroom = {this.state.bedrooms}
                         lValue = {this.state.lValue}
-                        rValue = {this.state.rValue}
+                        rValue = {(this.state.type===0) ? this.state.rValue : this.state.rValueForRent}
                     />
                 </View>
             </View>
